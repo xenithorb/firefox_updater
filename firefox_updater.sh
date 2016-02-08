@@ -12,7 +12,7 @@ LATEST_TAR_URL="https://download.mozilla.org/?product=${PRODUCT}&os=${ARCH}&lang
 TEMPFILE="$(mktemp -t firefox-dev.XXXX)"
 
 chcon_firefox() {
-        sudo chcon -u system_u -r object_r $@ 
+        sudo chcon -u system_u -r object_r "$@"
 }
 
 wget -O "${TEMPFILE}" "${LATEST_TAR_URL}" &&
