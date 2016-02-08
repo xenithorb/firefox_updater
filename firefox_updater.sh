@@ -18,9 +18,9 @@ chcon_firefox() {
 wget -O "${TEMPFILE}" "${LATEST_TAR_URL}" &&
 
 if [[ ! -d ${OPT_INSTALL_DIR} ]]; then
-	mkdir -p "${OPT_INSTALL_DIR}"
+	sudo mkdir -p "${OPT_INSTALL_DIR}"
 else
-	find "${OPT_INSTALL_DIR:?ERROR DIR NULL}" -mindepth 1 -delete
+	sudo find "${OPT_INSTALL_DIR:?ERROR DIR NULL}" -mindepth 1 -delete
 fi
 
 sudo tar --strip-components=1 -C "${OPT_INSTALL_DIR}" -xf "${TEMPFILE}"
