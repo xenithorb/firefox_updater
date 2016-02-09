@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Cron script to update Mozilla Firefox build editions 
-# Targeted OS: Fedora 23
+# Targeted OS: Fedora 23 - will probably work on most 
 # Default Firefox version: Firefox Developer Edition (aurora)
  set -x
 OPT_INSTALL_DIR="/opt/firefox-dev"
@@ -26,11 +26,13 @@ fi
 sudo tar --strip-components=1 -C "${OPT_INSTALL_DIR}" -xf "${TEMPFILE}"
 rm -f "${TEMPFILE}"
 
-# Set selinux contexts modeled after Fedora's firefox package 
-chcon_firefox -t lib_t                  "${OPT_INSTALL_DIR}/" -R
-chcon_firefox -t mozilla_exec_t         "${OPT_INSTALL_DIR}/"firefox{,-bin}
-chcon_firefox -t mozilla_plugin_exec_t  "${OPT_INSTALL_DIR}/plugin-container"
-chcon_firefox -t bin_t                  "${OPT_INSTALL_DIR}/run-mozilla.sh"
+# Set selinux contexts modeled after Fedora's firefox package
+if [[ selinuxenabled ]]; then
+	chcon_firefox -t lib_t                  "${OPT_INSTALL_DIR}/" -R
+	chcon_firefox -t mozilla_exec_t         "${OPT_INSTALL_DIR}/"firefox{,-bin}
+	chcon_firefox -t mozilla_plugin_exec_t  "${OPT_INSTALL_DIR}/plugin-container"
+	chcon_firefox -t bin_t                  "${OPT_INSTALL_DIR}/run-mozilla.sh"
+fi
 
 # Check for firefox-dev.desktop file 
 APPLICATION_FILE="/usr/share/applications/firefox-dev.desktop"
