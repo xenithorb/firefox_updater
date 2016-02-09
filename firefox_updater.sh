@@ -3,19 +3,27 @@
 # Cron script to update Mozilla Firefox build editions 
 # Targeted OS: Fedora 23 - will probably work on most 
 # Default Firefox version: Firefox Developer Edition (aurora)
- set -x
-OPT_INSTALL_DIR="/opt/firefox-dev"
+# Leaves files in the following spots:
+#	/opt/firefox-dev
+#	/usr/share/applications/firefox-dev.desktop
+#
+# set -x
+OPT_INSTALL_DIR="/opt/firefox-dev" # This is also assumed to not be changed in the below
+				   # base64 block (the .desktop file) Will require you to 
+				   # pipe that through `base64 -d | gunzip > file` if you 
+				   # want to change
 ARCH="linux64"
 LANG="en-US"
 PRODUCT="firefox-aurora-latest-ssl"
 LATEST_TAR_URL="https://download.mozilla.org/?product=${PRODUCT}&os=${ARCH}&lang=${LANG}"
 TEMPFILE="$(mktemp -t firefox-dev.XXXX)"
+XDG_APPS="/usr/share/applications"
 
 chcon_firefox() {
         sudo chcon -u system_u -r object_r "$@"
 }
 
-wget -O "${TEMPFILE}" "${LATEST_TAR_URL}" &&
+wget --quiet -O "${TEMPFILE}" "${LATEST_TAR_URL}" &&
 
 if [[ ! -d ${OPT_INSTALL_DIR} ]]; then
 	sudo mkdir -p "${OPT_INSTALL_DIR}"
@@ -35,8 +43,10 @@ if [[ selinuxenabled ]]; then
 fi
 
 # Check for firefox-dev.desktop file 
-APPLICATION_FILE="/usr/share/applications/firefox-dev.desktop"
+APPLICATION_FILE="${OPT_INSTALL_DIR}/firefox-dev.desktop"
 if [[ ! -f ${APPLICATION_FILE} ]]; then
+	# I compressed the file here just to save space because I wanted to keep a
+	# monolithic script. One assumption inside the file is the path /opt/firefox-dev/firefox 
 	cat <<-EOF | base64 -d | sudo sh -c "gunzip -c > \"${APPLICATION_FILE}\""
 	H4sIAEDluFYAA41Vz28bRRS+718xF05o7TYnJGsPKU1RhAgRqTBSZFVj77N36tmZ1cys7eRE0jat
 	FFcIJIoKqkSkUpOKqIQfFQjoZdv/Yd0cfQHZfwRv19511kkKB9tP733z3jfvfX6zeRV028iArAij
@@ -56,4 +66,8 @@ if [[ ! -f ${APPLICATION_FILE} ]]; then
 	1vuwhT5XO9i+yqwJlazVFWu5kVDUjoCu3WXCld1KYgaKdTBv5rKsT+zZ22hfYxzsVaEN5dzOXshL
 	paUly9rM3s9pVjJPWpu+nx8GqFZK1qCLuyXx//c0z01apHc2+fo0/v+K2Avp0qr/Aq7c23ULCAAA
 	EOF
+	# Let's deposit the real file into /opt/firefox-dev/ and link to it 
+	# so that if the user just removes the /opt dir, and forgets the link
+	# it doesn't point to anything 
+	ln -sf "${APPLICATION_FILE}" "${XDG_APPS}/"
 fi
