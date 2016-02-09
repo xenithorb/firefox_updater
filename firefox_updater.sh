@@ -8,10 +8,13 @@
 #	/usr/share/applications/firefox-dev.desktop
 #
 # set -x
-OPT_INSTALL_DIR="/opt/firefox-dev" # This is also assumed to not be changed in the below
-				   # base64 block (the .desktop file) Will require you to 
-				   # pipe that through `base64 -d | gunzip > file` if you 
-				   # want to change
+
+
+# INSTALL_DIR is assumed to not be changed in the below base64 block 
+# (the .desktop file) Will require you to pipe that through 
+# `base64 -d | gunzip > file` if you want to change that
+INSTALL_DIR="/opt/firefox-dev" 
+
 ARCH="linux64"
 LANG="en-US"
 PRODUCT="firefox-aurora-latest-ssl"
@@ -25,25 +28,25 @@ chcon_firefox() {
 
 wget --quiet -O "${TEMPFILE}" "${LATEST_TAR_URL}" &&
 
-if [[ ! -d ${OPT_INSTALL_DIR} ]]; then
-	sudo mkdir -p "${OPT_INSTALL_DIR}"
+if [[ ! -d ${INSTALL_DIR} ]]; then
+	sudo mkdir -p "${INSTALL_DIR}"
 else
-	sudo find "${OPT_INSTALL_DIR:?ERROR DIR NULL}" -mindepth 1 -delete
+	sudo find "${INSTALL_DIR:?ERROR DIR NULL}" -mindepth 1 -delete
 fi
 
-sudo tar --strip-components=1 -C "${OPT_INSTALL_DIR}" -xf "${TEMPFILE}"
+sudo tar --strip-components=1 -C "${INSTALL_DIR}" -xf "${TEMPFILE}"
 rm -f "${TEMPFILE}"
 
 # Set selinux contexts modeled after Fedora's firefox package
 if [[ selinuxenabled ]]; then
-	chcon_firefox -t lib_t                  "${OPT_INSTALL_DIR}/" -R
-	chcon_firefox -t mozilla_exec_t         "${OPT_INSTALL_DIR}/"firefox{,-bin}
-	chcon_firefox -t mozilla_plugin_exec_t  "${OPT_INSTALL_DIR}/plugin-container"
-	chcon_firefox -t bin_t                  "${OPT_INSTALL_DIR}/run-mozilla.sh"
+	chcon_firefox -t lib_t                  "${INSTALL_DIR}/" -R
+	chcon_firefox -t mozilla_exec_t         "${INSTALL_DIR}/"firefox{,-bin}
+	chcon_firefox -t mozilla_plugin_exec_t  "${INSTALL_DIR}/plugin-container"
+	chcon_firefox -t bin_t                  "${INSTALL_DIR}/run-mozilla.sh"
 fi
 
 # Check for firefox-dev.desktop file 
-APPLICATION_FILE="${OPT_INSTALL_DIR}/firefox-dev.desktop"
+APPLICATION_FILE="${INSTALL_DIR}/firefox-dev.desktop"
 if [[ ! -f ${APPLICATION_FILE} ]]; then
 	# I compressed the file here just to save space because I wanted to keep a
 	# monolithic script. One assumption inside the file is the path /opt/firefox-dev/firefox 
