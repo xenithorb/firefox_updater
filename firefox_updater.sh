@@ -71,6 +71,8 @@ if [[ ! -f ${APPLICATION_FILE} ]]; then
 	EOF
 	# Let's deposit the real file into /opt/firefox-dev/ and link to it 
 	# so that if the user just removes the /opt dir, and forgets the link
-	# it doesn't point to anything 
-	ln -sf "${APPLICATION_FILE}" "${XDG_APPS}/"
+	# it doesn't point to anything
+	if [[ ! -f "${XDG_APPS}/${APPLICATION_FILE##*/}" ]]; then 
+		sudo ln -sf "${APPLICATION_FILE}" "${XDG_APPS}/"
+	fi 
 fi
