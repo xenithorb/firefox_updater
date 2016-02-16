@@ -61,7 +61,6 @@ if [[ selinuxenabled ]]; then
 fi
 
 # Check for firefox-dev.desktop file 
-APPLICATION_FILE="${INSTALL_DIR}/firefox-dev.desktop"
 if [[ ! -f ${APPLICATION_FILE} ]]; then
 	# I compressed the file here just to save space because I wanted to keep a
 	# monolithic script. One assumption inside the file is the path /opt/firefox-dev/firefox 
@@ -90,4 +89,23 @@ if [[ ! -f ${APPLICATION_FILE} ]]; then
 	if [[ ! -f "${XDG_APPS}/${APPLICATION_FILE##*/}" ]]; then 
 		sudo ln -sf "${APPLICATION_FILE}" "${XDG_APPS}/"
 	fi 
+fi
+
+if [[ -d ${MOZ_PROFILE_PATH} ]]; then
+	DEFAULT_PROFILE="${MOZ_PROFILE_PATH}/$(get_default_profile "${MOZ_PROFILE_PATH}/profiles.ini")"
+	DEFAULT_PROFILE_PREFS="${DEFAULT_PROFILE}/prefs.js"
+	pref_a=("app.update.enabled" "app.update.auto")
+	pids="$(pidof firefox)" 
+	
+	if [[ -f "${DEFAULT_PROFILE_PREFS}" ]]; then
+		for i in "${pref_a[@]}"; do
+			line="$(wrap_pref "$i" "false")"
+			if ! grep -q "$line" "${DEFAULT_PROFILE_PREFS}"; then
+				# Firefox re-writes prefs.js when closed
+				# So we close it first, then write 
+				kill -TERM "$pids" 
+				echo "$line" >> "${DEFAULT_PROFILE_PREFS}"
+			fi
+		done
+	fi
 fi
