@@ -1,20 +1,17 @@
 #!/bin/bash
 #
-# Cron script to update Mozilla Firefox build editions 
-# Targeted OS: Fedora 23 - will probably work on most 
+# Cron script to update Mozilla Firefox build editions
+# Targeted OS: Fedora 23 - will probably work on most
 # Default Firefox version: Firefox Developer Edition (aurora)
 # Leaves files in the following spots:
 #	/opt/firefox-dev
 #	/usr/share/applications/firefox-dev.desktop
 #
 # set -x
-
-
-# INSTALL_DIR is assumed to not be changed in the below base64 block 
-# (the .desktop file) Will require you to pipe that through 
+# INSTALL_DIR is assumed to not be changed in the below base64 block
+# (the .desktop file) Will require you to pipe that through
 # `base64 -d | gunzip > file` if you want to change that
-INSTALL_DIR="/opt/firefox-dev" 
-
+INSTALL_DIR="/opt/firefox-dev"
 ARCH="linux64"
 LANG="en-US"
 PRODUCT="firefox-aurora-latest-ssl"
@@ -23,9 +20,11 @@ TEMPFILE="$(mktemp -t firefox-dev.XXXX)"
 XDG_APPS="/usr/share/applications"
 MOZ_PROFILE_PATH="$HOME/.mozilla/firefox"
 APPLICATION_FILE="${INSTALL_DIR}/firefox-dev.desktop"
+
 chcon_firefox() {
         sudo chcon -u system_u -r object_r "$@"
 }
+
 get_default_profile() {
 	while IFS='=' read -r var val; do
 		if [[ "$var" == \[*\] ]]; then
@@ -41,9 +40,11 @@ get_default_profile() {
 		fi
 	done
 }
+
 wrap_pref() {
 	echo "user_pref(\"$1\", $2);"
 }
+
 wget --quiet -O "${TEMPFILE}" "${LATEST_TAR_URL}" &&
 if [[ ! -d ${INSTALL_DIR} ]]; then
 	sudo mkdir -p "${INSTALL_DIR}"
@@ -59,11 +60,10 @@ if [[ selinuxenabled ]]; then
 	chcon_firefox -t mozilla_plugin_exec_t  "${INSTALL_DIR}/plugin-container"
 	chcon_firefox -t bin_t                  "${INSTALL_DIR}/run-mozilla.sh"
 fi
-
-# Check for firefox-dev.desktop file 
+# Check for firefox-dev.desktop file
 if [[ ! -f ${APPLICATION_FILE} ]]; then
 	# I compressed the file here just to save space because I wanted to keep a
-	# monolithic script. One assumption inside the file is the path /opt/firefox-dev/firefox 
+	# monolithic script. One assumption inside the file is the path /opt/firefox-dev/firefox
 	cat <<-EOF | base64 -d | sudo sh -c "gunzip -c > \"${APPLICATION_FILE}\""
 	H4sIAEDluFYAA41Vz28bRRS+718xF05o7TYnJGsPKU1RhAgRqTBSZFVj77N36tmZ1cys7eRE0jat
 	FFcIJIoKqkSkUpOKqIQfFQjoZdv/Yd0cfQHZfwRv19511kkKB9tP733z3jfvfX6zeRV028iArAij
@@ -83,27 +83,26 @@ if [[ ! -f ${APPLICATION_FILE} ]]; then
 	1vuwhT5XO9i+yqwJlazVFWu5kVDUjoCu3WXCld1KYgaKdTBv5rKsT+zZ22hfYxzsVaEN5dzOXshL
 	paUly9rM3s9pVjJPWpu+nx8GqFZK1qCLuyXx//c0z01apHc2+fo0/v+K2Avp0qr/Aq7c23ULCAAA
 	EOF
-	# Let's deposit the real file into /opt/firefox-dev/ and link to it 
+	# Let's deposit the real file into /opt/firefox-dev/ and link to it
 	# so that if the user just removes the /opt dir, and forgets the link
 	# it doesn't point to anything
-	if [[ ! -f "${XDG_APPS}/${APPLICATION_FILE##*/}" ]]; then 
+	if [[ ! -f "${XDG_APPS}/${APPLICATION_FILE##*/}" ]]; then
 		sudo ln -sf "${APPLICATION_FILE}" "${XDG_APPS}/"
-	fi 
+	fi
 fi
-
 if [[ -d ${MOZ_PROFILE_PATH} ]]; then
 	DEFAULT_PROFILE="${MOZ_PROFILE_PATH}/$(get_default_profile "${MOZ_PROFILE_PATH}/profiles.ini")"
 	DEFAULT_PROFILE_PREFS="${DEFAULT_PROFILE}/prefs.js"
 	pref_a=("app.update.enabled" "app.update.auto")
-	pids="$(pidof firefox)" 
+	pids="$(pidof firefox)"
 	
 	if [[ -f "${DEFAULT_PROFILE_PREFS}" ]]; then
 		for i in "${pref_a[@]}"; do
 			line="$(wrap_pref "$i" "false")"
 			if ! grep -q "$line" "${DEFAULT_PROFILE_PREFS}"; then
 				# Firefox re-writes prefs.js when closed
-				# So we close it first, then write 
-				kill -TERM "$pids" 
+				# So we close it first, then write
+				kill -TERM "$pids"
 				echo "$line" >> "${DEFAULT_PROFILE_PREFS}"
 			fi
 		done
