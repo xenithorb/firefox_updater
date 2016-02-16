@@ -21,22 +21,37 @@ PRODUCT="firefox-aurora-latest-ssl"
 LATEST_TAR_URL="https://download.mozilla.org/?product=${PRODUCT}&os=${ARCH}&lang=${LANG}"
 TEMPFILE="$(mktemp -t firefox-dev.XXXX)"
 XDG_APPS="/usr/share/applications"
-
+MOZ_PROFILE_PATH="$HOME/.mozilla/firefox"
+APPLICATION_FILE="${INSTALL_DIR}/firefox-dev.desktop"
 chcon_firefox() {
         sudo chcon -u system_u -r object_r "$@"
 }
-
+get_default_profile() {
+	while IFS='=' read -r var val; do
+		if [[ "$var" == \[*\] ]]; then
+			section=$( a=${var/[}; a=${a/]}; echo $a )
+			section_a+=($section)
+		elif [[ $val ]]; then
+			declare -A "${section}[${var}]=${val}"
+		fi
+	done < "${1}"
+	for i in "${section_a[@]}"; do
+		if [[ "$(eval echo \${$i[Default]})" == 1 ]]; then
+			eval echo "\${$i[Path]}"
+		fi
+	done
+}
+wrap_pref() {
+	echo "user_pref(\"$1\", $2);"
+}
 wget --quiet -O "${TEMPFILE}" "${LATEST_TAR_URL}" &&
-
 if [[ ! -d ${INSTALL_DIR} ]]; then
 	sudo mkdir -p "${INSTALL_DIR}"
 else
 	sudo find "${INSTALL_DIR:?ERROR DIR NULL}" -mindepth 1 -delete
 fi
-
 sudo tar --strip-components=1 -C "${INSTALL_DIR}" -xf "${TEMPFILE}"
 rm -f "${TEMPFILE}"
-
 # Set selinux contexts modeled after Fedora's firefox package
 if [[ selinuxenabled ]]; then
 	chcon_firefox -t lib_t                  "${INSTALL_DIR}/" -R
