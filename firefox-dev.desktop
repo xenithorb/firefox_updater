@@ -42,7 +42,7 @@ Comment[pt]=Navegue na Internet
 Comment[pt_BR]=Navegue na Internet
 Comment[sk]=Prehliadanie internetu
 Comment[sv]=Surfa på webben
-Exec=/opt/firefox-dev/firefox %u
+Exec=/opt/firefox-dev/firefox %u --class=firefox-developer
 Icon=/opt/firefox-dev/browser/icons/mozicon128.png
 Terminal=false
 Type=Application
@@ -51,14 +51,14 @@ StartupNotify=true
 Categories=Network;WebBrowser;
 Keywords=web;browser;internet;
 Actions=new-window;new-private-window;
-
+StartupWMClass=firefox-developer
 X-Desktop-File-Install-Version=0.22
 
 [Desktop Action new-window]
 Name=Open a New Window
-Exec=/opt/firefox-dev/firefox %u
+Exec=/opt/firefox-dev/firefox %u --class=firefox-developer
 
 [Desktop Action new-private-window]
 Name=Open a New Private Window
-Exec=/opt/firefox-dev/firefox --private-window %u
+Exec=/opt/firefox-dev/firefox --private-window %u --class=firefox-developer
 
