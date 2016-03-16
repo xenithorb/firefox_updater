@@ -63,7 +63,7 @@ fi
 
 # Check for firefox-dev.desktop file
 if [[ ! -f ${APPLICATION_FILE} ]]; then
-	sudo cp "./firefox-dev.desktop" "${APPLICATION_FILE}"
+	sudo cp "firefox-dev.desktop" "${APPLICATION_FILE}"
 	# Let's deposit the real file into /opt/firefox-dev/ and link to it
 	# so that if the user just removes the /opt dir, and forgets the link
 	# it doesn't point to anything
