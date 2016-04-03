@@ -7,11 +7,13 @@
 #	/opt/firefox-dev
 #	/usr/share/applications/firefox-dev.desktop
 #
-# set -x
+ set -x
 # INSTALL_DIR is assumed to not be changed in the below base64 block
 # (the .desktop file) Will require you to pipe that through
 # `base64 -d | gunzip > file` if you want to change that
 INSTALL_DIR="/opt/firefox-dev"
+SCRIPT_LOC="$(readlink -e $0)"
+SCRIPT_DIR="${SCRIPT_LOC%/*}"
 ARCH="linux64"
 LANG="en-US"
 PRODUCT="firefox-aurora-latest-ssl"
@@ -43,6 +45,14 @@ get_default_profile() {
 
 wrap_pref() {
 	echo "user_pref(\"$1\", $2);"
+}
+
+jinja_replace() {
+	# $1 = template variable, i.e. {{SCRIPT_LOC}} 
+	# $2 = value to replace with
+	# $3 = file to edit
+	[[ -f "$3" ]] && { INLINE="-i"; SUDO="sudo"; }
+	"$SUDO" sed -r "$INLINE" 's|\{\{[ ]*'"$1"'[ ]*\}\}|'"$2"'|g' "$3"
 }
 
 wget --quiet -O "${TEMPFILE}" "${LATEST_TAR_URL}" &&
@@ -90,3 +100,9 @@ if [[ -d ${MOZ_PROFILE_PATH} ]]; then
 		done
 	fi
 fi
+
+# Copy systemd service and timer 
+sudo cp -r "${SCRIPT_DIR}/systemd" "${INSTALL_DIR}/"
+jinja_replace "SCRIPT_LOC" "$SCRIPT_LOC" "${INSTALL_DIR}/systemd/firefox-updater.service"
+sudo systemctl link "${INSTALL_DIR}/systemd/firefox-updater.service"
+sudo systemctl --now enable "${INSTALL_DIR}/systemd/firefox-updater.timer"

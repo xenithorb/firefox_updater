@@ -1,0 +1,6 @@
+[Unit]
+Description=Update Firefox Developer edition
+
+[Service]
+Type=oneshot
+ExecStart={{SCRIPT_LOC}}

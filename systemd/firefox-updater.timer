@@ -1,0 +1,13 @@
+[Unit]
+Description=Update Firefox Developer edition daily
+
+[Timer]
+# Builds appear to be available at 7AM EST
+# OnCalendar=daily
+# or  
+OnCalendar=*-*-* 07:00:00
+AccuracySec=10m
+Persistent=true
+
+[Install]
+WantedBy=multi-user.target
