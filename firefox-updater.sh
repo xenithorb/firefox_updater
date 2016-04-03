@@ -7,7 +7,7 @@
 #	/opt/firefox-dev
 #	/usr/share/applications/firefox-dev.desktop
 #
- set -x
+# set -x
 # INSTALL_DIR is assumed to not be changed in the below base64 block
 # (the .desktop file) Will require you to pipe that through
 # `base64 -d | gunzip > file` if you want to change that
@@ -55,16 +55,24 @@ jinja_replace() {
 	"$SUDO" sed -r "$INLINE" 's|\{\{[ ]*'"$1"'[ ]*\}\}|'"$2"'|g' "$3"
 }
 
+# Download Firefox
 wget --quiet -O "${TEMPFILE}" "${LATEST_TAR_URL}" &&
+
+# Remove the entire install directory (fresh every time)
 if [[ ! -d ${INSTALL_DIR} ]]; then
 	sudo mkdir -p "${INSTALL_DIR}"
 else
 	sudo find "${INSTALL_DIR:?ERROR DIR NULL}" -mindepth 1 -delete
 fi
+
+# Extract new firefox archive
 sudo tar --strip-components=1 -C "${INSTALL_DIR}" -xf "${TEMPFILE}"
+
+# Remove the previously downloaded files
 rm -f "${TEMPFILE}"
+
 # Set selinux contexts modeled after Fedora's firefox package
-if [[ selinuxenabled ]]; then
+if selinuxenabled; then
 	chcon_firefox -t lib_t                  "${INSTALL_DIR}/" -R
 	chcon_firefox -t mozilla_exec_t         "${INSTALL_DIR}/"firefox{,-bin}
 	chcon_firefox -t mozilla_plugin_exec_t  "${INSTALL_DIR}/plugin-container"
@@ -82,7 +90,10 @@ if [[ ! -f ${APPLICATION_FILE} ]]; then
 	fi
 fi
 
-if [[ -d ${MOZ_PROFILE_PATH} ]]; then
+# Firefox comes with automatic updating enabled by default
+# Here, we will find the default mozilla profile and inject the proper settings
+# ONLY WORKS IF RUN BY USER NOT ROOT
+if [[ -d ${MOZ_PROFILE_PATH} && ! $UID == 0 ]]; then
 	DEFAULT_PROFILE="${MOZ_PROFILE_PATH}/$(get_default_profile "${MOZ_PROFILE_PATH}/profiles.ini")"
 	DEFAULT_PROFILE_PREFS="${DEFAULT_PROFILE}/prefs.js"
 	pref_a=("app.update.enabled" "app.update.auto")
