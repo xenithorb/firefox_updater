@@ -48,7 +48,7 @@ wrap_pref() {
 }
 
 jinja_replace() {
-	# $1 = template variable, i.e. {{SCRIPT_LOC}} 
+	# $1 = template variable, i.e. {{SCRIPT_LOC}}
 	# $2 = value to replace with
 	# $3 = file to edit
 	[[ -f "$3" ]] && { INLINE="-i"; SUDO="sudo"; }
@@ -98,7 +98,7 @@ if [[ -d ${MOZ_PROFILE_PATH} && ! $UID == 0 ]]; then
 	DEFAULT_PROFILE_PREFS="${DEFAULT_PROFILE}/prefs.js"
 	pref_a=("app.update.enabled" "app.update.auto")
 	pids="$(pidof firefox)"
-	
+
 	if [[ -f "${DEFAULT_PROFILE_PREFS}" ]]; then
 		for i in "${pref_a[@]}"; do
 			line="$(wrap_pref "$i" "false")"
@@ -112,7 +112,7 @@ if [[ -d ${MOZ_PROFILE_PATH} && ! $UID == 0 ]]; then
 	fi
 fi
 
-# Copy systemd service and timer 
+# Copy systemd service and timer
 sudo cp -r "${SCRIPT_DIR}/systemd" "${INSTALL_DIR}/"
 jinja_replace "SCRIPT_LOC" "$SCRIPT_LOC" "${INSTALL_DIR}/systemd/firefox-updater.service"
 sudo systemctl link "${INSTALL_DIR}/systemd/firefox-updater.service"
