@@ -77,6 +77,7 @@ if selinuxenabled; then
 	chcon_firefox -t mozilla_exec_t         "${INSTALL_DIR}/"firefox{,-bin}
 	chcon_firefox -t mozilla_plugin_exec_t  "${INSTALL_DIR}/plugin-container"
 	chcon_firefox -t bin_t                  "${INSTALL_DIR}/run-mozilla.sh"
+	chcon_firefox -t shell_exec_t			"$(readlink -e $BASH_SOURCE)"
 fi
 
 # Check for firefox-dev.desktop file
